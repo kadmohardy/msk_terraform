@@ -25,57 +25,76 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
-# data "aws_iam_policy_document" "pipe_assume_policy_document" {
-#   statement {
-#     actions = ["sts:AssumeRole"]
-#     principals {
-#       type        = "Service"
-#       identifiers = ["pipes.amazonaws.com"]
-#     }
-#   }
-# }
+data "aws_iam_policy_document" "pipe_assume_policy_document" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["pipes.amazonaws.com"]
+    }
+  }
+}
 
-# data "aws_iam_policy_document" "pipe_iam_policy_document" {
-#   statement {
-#     sid    = "AllowPipeToAccessSQS"
-#     effect = "Allow"
-#     actions = [
-#       "sqs:ReceiveMessage",
-#       "sqs:DeleteMessage",
-#       "sqs:GetQueueAttributes"
-#     ]
-#     resources = [aws_sqs_queue.customer_request_sqs.arn]
-#   }
+data "aws_iam_policy_document" "pipe_iam_policy_document" {
+  statement {
+    sid    = "AllowPipeToAccessSQS"
+    effect = "Allow"
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:SendMessage"
+    ]
+    resources = [aws_sqs_queue.accounts_request_sqs.arn]
+  }
 
-#   statement {
-#     sid    = "AllowPipeToAccessSQS"
-#     effect = "Allow"
-#     actions = [
-#       "sqs:ReceiveMessage",
-#       "sqs:DeleteMessage",
-#       "sqs:GetQueueAttributes"
-#     ]
-#     resources = [aws_sqs_queue.customer_request_sqs.arn]
-#   }
+  statement {
+    sid    = "AllowPipeToAccessKafka"
+    effect = "Allow"
+    actions = [
+      "kafka:DescribeCluster",
+      "kafka:DescribeClusterV2",
+      "kafka:GetBootstrapBrokers"
+    ]
+    resources = [aws_msk_cluster.kafka.arn]
+  }
 
-#   statement {
-#     sid = "InvokeEnrichmentLambdaFunction"
-#     actions = [
-#       "lambda:InvokeFunction"
-#     ]
-#     resources = ["*"]
-#   }
-# }
+  statement {
+    sid    = "AllowPipeToAccessEC2AndLogs"
+    effect = "Allow"
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeVpcs",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeSecurityGroups",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = ["*"]
+  }
 
-# data "aws_iam_policy_document" "lambda_assume_policy_document" {
-#   statement {
-#     actions = ["sts:AssumeRole"]
-#     principals {
-#       type        = "Service"
-#       identifiers = ["lambda.amazonaws.com"]
-#     }
-#   }
-# }
+  statement {
+    sid = "InvokeEnrichmentLambdaFunction"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = ["*"]
+  }
+}
+
+# Data to create policies for lambda
+data "aws_iam_policy_document" "lambda_assume_policy_document" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
 
 # data "archive_file" "enrichment_customer_request_lambda_file" {
 #   type        = "zip"
